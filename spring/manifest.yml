@@ -1,13 +1,11 @@
----
 applications:
-- name: rabbitmq-spring
+- name: meetup-rabbitmq-spring
   memory: 512M
   instances: 1
-  host: rabbitmq-spring-${random-word}
+  host: meetup-rabbitmq-spring
   path: target/rabbitmq-spring-1.0-SNAPSHOT.war
-  services:
-    rabbit-sample:
-      label: cloudamqp
-      provider: cloudamqp
-      version: n/a
-      plan: lemur
+  services: {
+    }
+  domain: cfapps.io
+  env: {
+    }
