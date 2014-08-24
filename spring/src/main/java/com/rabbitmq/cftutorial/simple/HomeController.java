@@ -9,8 +9,7 @@ import org.springframework.amqp.core.AmqpTemplate;
 
 @Controller
 public class HomeController {
-	public static final String QUEUE_NAME = "messages";
-	
+
 	@Autowired
 	AmqpTemplate amqpTemplate;
 
@@ -23,7 +22,8 @@ public class HomeController {
 	@RequestMapping(value = "/publish", method = RequestMethod.POST)
 	public String publish(Model model, Message message) {
 		// Send a message to the "messages" queue
-		amqpTemplate.convertAndSend(QUEUE_NAME, message.getValue());
+		amqpTemplate.convertAndSend(SampleAmqpSimpleApplication.QUEUE_NAME,
+				message.getValue());
 		model.addAttribute("published", true);
 		return home(model);
 	}
@@ -31,7 +31,8 @@ public class HomeController {
 	@RequestMapping(value = "/get", method = RequestMethod.POST)
 	public String get(Model model) {
 		// Receive a message from the "messages" queue
-		String message = (String) amqpTemplate.receiveAndConvert(QUEUE_NAME);
+		String message = (String) amqpTemplate
+				.receiveAndConvert(SampleAmqpSimpleApplication.QUEUE_NAME);
 		if (message != null)
 			model.addAttribute("got", message);
 		else

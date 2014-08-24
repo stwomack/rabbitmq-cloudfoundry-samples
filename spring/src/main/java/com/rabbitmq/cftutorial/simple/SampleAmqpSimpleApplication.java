@@ -16,7 +16,17 @@
 
 package com.rabbitmq.cftutorial.simple;
 
+import java.io.UnsupportedEncodingException;
+
+import javax.annotation.PostConstruct;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.springframework.amqp.core.AmqpAdmin;
 import org.springframework.amqp.core.AmqpTemplate;
+import org.springframework.amqp.core.BindingBuilder;
+import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.core.TopicExchange;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 import org.springframework.amqp.rabbit.listener.adapter.MessageListenerAdapter;
@@ -26,6 +36,7 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class SampleAmqpSimpleApplication {
+	public static final String QUEUE_NAME = "myQueue";
 
 	@Autowired
 	private AmqpTemplate amqpTemplate;
@@ -33,20 +44,33 @@ public class SampleAmqpSimpleApplication {
 	@Autowired
 	private ConnectionFactory connectionFactory;
 
+	@Autowired
+	private AmqpAdmin amqpAdmin;
+
+	@PostConstruct
+	public void setUpQueue() {
+	    Queue queue = new Queue(QUEUE_NAME);
+	    this.amqpAdmin.declareQueue(queue);
+		TopicExchange exchange = new TopicExchange("chatExchange");
+		this.amqpAdmin.declareBinding(BindingBuilder.bind(queue).to(exchange).with("*"));
+	}
+	
 	@Bean
 	public SimpleMessageListenerContainer container() {
 		SimpleMessageListenerContainer container = new SimpleMessageListenerContainer(
 				this.connectionFactory);
 		Object listener = new Object() {
 			@SuppressWarnings("unused")
-			public void handleMessage(String foo) {
-				System.out.println("Got message: " + foo);
+			public void handleMessage(Object foo) throws JSONException, UnsupportedEncodingException {
+				byte[] boo = (byte[]) foo;
+				String newString = new String(boo, "UTF-8");
+				JSONObject jsonObject = new JSONObject(newString);
+				System.out.println("Received Message" + jsonObject.toString());
 			}
 		};
 		MessageListenerAdapter adapter = new MessageListenerAdapter(listener);
 		container.setMessageListener(adapter);
-		container.setQueueNames(HomeController.QUEUE_NAME);
+		container.setQueueNames(QUEUE_NAME);
 		return container;
 	}
-
 }
